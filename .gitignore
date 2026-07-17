@@ -1,0 +1,11 @@
+venv/
+.env
+__pycache__/
+*.pyc
+
+chunks.json
+documents.json
+
+desktop.ini
+
+data/
