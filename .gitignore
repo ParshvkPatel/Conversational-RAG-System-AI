@@ -1,11 +1,52 @@
-venv/
-.env
+# ==============================
+# Python
+# ==============================
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
-chunks.json
-documents.json
+# Virtual Environment
+venv/
+env/
+.venv/
 
+# Environment Variables
+.env
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Windows
 desktop.ini
+Thumbs.db
 
+# macOS
+.DS_Store
+
+# ==============================
+# Generated Files
+# ==============================
+
+documents.json
+chunks.json
+
+# Vector Database
+vector_db/
+
+# Raw Dataset (Very Large)
 data/
+
+# Logs
+*.log
+
+# Cache
+.cache/
+
+# Streamlit Cache
+.streamlit/cache/
+
+# Jupyter
+.ipynb_checkpoints/

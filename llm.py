@@ -21,34 +21,31 @@ def generate_answer(question, context):
     prompt = f"""
 {SYSTEM_PROMPT}
 
-Context:
 {context}
 
-Question:
+Current Question:
 {question}
 
 Answer:
 """
 
-    try:
+    response = client.chat.completions.create(
 
-        response = client.chat.completions.create(
-            model=MODEL,
-            temperature=0,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
-        answer = response.choices[0].message.content
+        model=MODEL,
 
-        return answer.strip()
+        temperature=0,
 
-    except Exception as e:
+        max_tokens=700,
 
-        print("\n❌ GROQ ERROR:")
-        print(e)
+        messages=[
 
-        return "Error while generating answer."
+            {
+                "role": "user",
+                "content": prompt
+            }
+
+        ]
+
+    )
+
+    return response.choices[0].message.content.strip()

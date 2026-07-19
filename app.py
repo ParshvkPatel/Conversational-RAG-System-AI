@@ -1,222 +1,56 @@
-# import streamlit as st
-
-# from langchain_huggingface import HuggingFaceEmbeddings
-# from langchain_community.vectorstores import FAISS
-
-# from llm import generate_answer
-
-
-# # ==========================================
-# # Page Config
-# # ==========================================
-
-# st.set_page_config(
-#     page_title="Conversational RAG",
-#     page_icon="📚",
-#     layout="wide"
-# )
-
-# st.title("📚 Conversational RAG System")
-# st.write("Ask questions from Gujarat State School Textbooks")
-
-
-# # ==========================================
-# # Load Vector DB
-# # ==========================================
-
-# @st.cache_resource
-# def load_db():
-
-#     embeddings = HuggingFaceEmbeddings(
-#         model_name="BAAI/bge-small-en-v1.5"
-#     )
-
-#     db = FAISS.load_local(
-#         "vector_db",
-#         embeddings,
-#         allow_dangerous_deserialization=True
-#     )
-
-#     return db
-
-
-# db = load_db()
-
-
-# # ==========================================
-# # Subject Detection
-# # ==========================================
-
-# def detect_subject(question):
-
-#     q = question.lower()
-
-#     mapping = {
-
-#         "biology":[
-#             "photosynthesis","cell","plant","animal","respiration",
-#             "dna","rna","blood","heart","human","leaf","chlorophyll"
-#         ],
-
-#         "physics":[
-#             "force","motion","electricity","current",
-#             "voltage","magnet","light","gravity"
-#         ],
-
-#         "chemistry":[
-#             "acid","base","salt","atom",
-#             "molecule","reaction","chemical"
-#         ],
-
-#         "mathematics":[
-#             "triangle","algebra","geometry",
-#             "circle","equation","graph"
-#         ],
-
-#         "political science":[
-#             "democracy","constitution",
-#             "government","rights","citizen"
-#         ],
-
-#         "history":[
-#             "gandhi","ashoka","mughal",
-#             "history","british","freedom"
-#         ],
-
-#         "geography":[
-#             "river","mountain","soil",
-#             "climate","plateau","earthquake"
-#         ]
-
-#     }
-
-#     for subject, words in mapping.items():
-
-#         for word in words:
-
-#             if word in q:
-
-#                 return subject
-
-#     return None
-
-
-# # ==========================================
-# # Chat History
-# # ==========================================
-
-# if "messages" not in st.session_state:
-#     st.session_state.messages = []
-
-
-# for msg in st.session_state.messages:
-
-#     with st.chat_message(msg["role"]):
-
-#         st.markdown(msg["content"])
-
-
-# # ==========================================
-# # User Question
-# # ==========================================
-
-# question = st.chat_input("Ask your question...")
-
-
-# if question:
-
-#     st.session_state.messages.append(
-#         {
-#             "role":"user",
-#             "content":question
-#         }
-#     )
-
-#     with st.chat_message("user"):
-
-#         st.markdown(question)
-
-#     with st.spinner("Searching textbooks..."):
-
-#         subject = detect_subject(question)
-
-#         retriever = db.as_retriever(
-#             search_type="mmr",
-#             search_kwargs={
-#                 "k":5,
-#                 "fetch_k":15
-#             }
-#         )
-
-#         if subject:
-
-#             docs = retriever.invoke(
-#                 f"{subject} {question}"
-#             )
-
-#         else:
-
-#             docs = retriever.invoke(question)
-
-
-#         context = "\n\n".join(
-
-#             [
-
-#                 f"""
-# Book : {d.metadata.get("book_name","")}
-
-# Subject : {d.metadata.get("subject","Unknown")}
-
-# Standard : {d.metadata.get("standard","")}
-
-# Language : {d.metadata.get("language","")}
-
-# Page : {d.metadata.get("page","")}
-
-# Content:
-# {d.page_content}
-# """
-
-#                 for d in docs
-
-#             ]
-
-#         )
-
-#         answer = generate_answer(
-#             question,
-#             context
-#         )
-
-#     with st.chat_message("assistant"):
-
-#         st.markdown(answer)
-
-#         st.markdown("---")
-
-#         st.subheader("📖 Sources")
-
-#         for d in docs:
-
-#             st.write(
-#                 f"**{d.metadata.get('book_name','')}** | "
-#                 f"{d.metadata.get('subject','Unknown')} | "
-#                 f"Std {d.metadata.get('standard','')} | "
-#                 f"Page {d.metadata.get('page','')}"
-#             )
-
-#     st.session_state.messages.append(
-#         {
-#             "role":"assistant",
-#             "content":answer
-#         }
-#     )
 import streamlit as st
+
+# ==========================================
+# Custom CSS
+# ==========================================
+
+st.markdown("""
+<style>
+
+.main{
+    background-color:#f5f7fb;
+}
+
+h1{
+    color:#0F172A;
+    font-weight:700;
+}
+
+.stChatMessage{
+    border-radius:15px;
+    padding:15px;
+    margin-bottom:10px;
+}
+
+.stButton>button{
+    width:100%;
+    border-radius:10px;
+    background:#2563EB;
+    color:white;
+    font-weight:bold;
+}
+
+.stButton>button:hover{
+    background:#1D4ED8;
+}
+
+[data-testid="stSidebar"]{
+    background:#111827;
+}
+
+[data-testid="stSidebar"] *{
+    color:white;
+}
+
+.stExpander{
+    border-radius:10px;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-
 from llm import generate_answer
 
 
@@ -229,13 +63,63 @@ st.set_page_config(
     page_icon="📚",
     layout="wide"
 )
+# ==========================================
+# Chat History
+# ==========================================
 
+if "messages" not in st.session_state:
 
-st.title("📚 Conversational RAG System")
+    st.session_state.messages = []
 
-st.caption(
-    "AI Assistant for Gujarat State School Textbook Board (GSSTB)"
+st.markdown("""
+<h1 style='font-size:52px; font-weight:bold; margin-bottom:0;'>
+📚 Conversational RAG System
+</h1>
+<h3 style='font-size:24px; font-weight:400; color:#bdbdbd; margin-top:5px;'>
+AI Assistant for Gujarat State School Textbooks
+</h3>
+""", unsafe_allow_html=True)
+# ==========================================
+# Sidebar
+# ==========================================
+
+with st.sidebar:
+
+    st.markdown ("""
+📚 Conversational RAG System
+
+AI Assistant for Gujarat State School Textbooks
+                    """)                
+
+    st.markdown("---")
+
+    st.write("### Dataset")
+
+    st.write("📄 PDFs : 406")
+
+    st.write("📑 Pages : 13,353")
+
+    st.write("🧩 Chunks : 30,628")
+
+    st.write("🤖 LLM : Llama 3.3 70B")
+    st.markdown("---")
+
+    st.write("### Session")
+
+    st.metric(
+    "Messages",
+    len(st.session_state.messages)
 )
+
+    st.write("🔎 Embedding : BAAI/bge-small-en-v1.5")
+
+    st.markdown("---")
+
+    if st.button("🗑️ Clear Chat"):
+
+        st.session_state.messages = []
+
+        st.rerun()
 
 
 # ==========================================
@@ -259,8 +143,34 @@ def load_db():
 
 
 db = load_db()
+# ==========================================
+# Retriever
+# ==========================================
 
+retriever = db.as_retriever(
+    search_type="similarity_score_threshold",
+    search_kwargs={
+        "k": 5,
+        "score_threshold": 0.5
+    }
+)
 
+# ==========================================
+# Welcome Message
+# ==========================================
+
+if len(st.session_state.messages) == 0:
+
+    st.info("""
+👋 Welcome
+
+Ask questions from Gujarat State School Textbooks.
+
+Examples:
+• What is Photosynthesis?
+• Explain Democracy.
+• Newton's First Law
+""")
 
 # ==========================================
 # Subject Detection
@@ -314,18 +224,6 @@ def detect_subject(question):
 
     return None
 
-
-
-# ==========================================
-# Session Memory
-# ==========================================
-
-if "messages" not in st.session_state:
-
-    st.session_state.messages = []
-
-
-
 # Display Chat
 
 for msg in st.session_state.messages:
@@ -350,7 +248,7 @@ for msg in st.session_state.messages:
 
 
 question = st.chat_input(
-    "Ask your textbook question..."
+    "Ask anything from the textbooks..."
 )
 
 
@@ -382,18 +280,6 @@ if question:
 
             subject = detect_subject(question)
 
-
-
-            retriever = db.as_retriever(
-             search_type="similarity_score_threshold",
-             search_kwargs={
-                "k":3,
-            "score_threshold":0.5
-            }
-        )
-
-
-
             if subject:
 
                 docs = retriever.invoke(
@@ -419,6 +305,13 @@ if question:
 
 
             else:
+                history = ""
+
+                for msg in st.session_state.messages[-6:]:
+
+                         role = "User" if msg["role"] == "user" else "Assistant"
+
+                         history += f"{role}: {msg['content']}\n"
 
 
                 context="\n\n".join(
@@ -444,7 +337,15 @@ Content:
                     ]
 
                 )
+                context = f"""  
+                    Conversation History
 
+                {history}
+
+                Retrieved Text
+
+                {context}
+                """
 
                 answer = generate_answer(
                     question,
@@ -466,7 +367,7 @@ Content:
 
                     f"{d.metadata.get('book_name','')} | "
                     f"{d.metadata.get('subject','')} | "
-                    f"Std {d.metadata.get('standard','')} | "
+                    f"{d.metadata.get('standard','').replace('_',' ')} | "
                     f"Page {d.metadata.get('page','')}"
 
                     )
@@ -480,8 +381,9 @@ Content:
 
 
 
-        st.markdown(answer)
+        st.subheader("📖 Answer")
 
+        st.write(answer)
 
 
         if sources and "not available" not in answer.lower():
@@ -492,10 +394,7 @@ Content:
 
                 for s in sources:
 
-                    st.write(
-                        "• " + s
-                    )
-
+                    st.success(s)
 
 
     st.session_state.messages.append(
@@ -507,3 +406,44 @@ Content:
         }
 
     )
+  # ==========================================
+# Download Chat
+# ==========================================
+
+chat_text = ""
+
+for msg in st.session_state.messages:
+
+    role = "User" if msg["role"] == "user" else "Assistant"
+
+    chat_text += f"{role}\n"
+    chat_text += f"{msg['content']}\n\n"
+
+
+if st.session_state.messages:
+
+    st.download_button(
+        label="📥 Download Chat",
+        data=chat_text,
+        file_name="conversation.txt",
+        mime="text/plain",
+        key="download_chat_button"
+    )
+
+
+st.markdown("---")
+
+st.markdown(
+"""
+<center>
+
+Developed ❤️ by <b>Parshv Patel</b>
+
+Conversational RAG System
+
+Gujarat State School Textbooks
+
+</center>
+""",
+unsafe_allow_html=True
+)

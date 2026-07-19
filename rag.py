@@ -35,7 +35,7 @@ print("Type 'exit' to quit.\n")
 retriever = db.as_retriever(
     search_type="mmr",
     search_kwargs={
-        "k": 5,
+        "k": 4,
         "fetch_k": 15
     }
 )
@@ -121,7 +121,11 @@ def detect_subject(question):
                 return subject
 
     return None
+# ==========================================
+# Conversation History
+# ==========================================
 
+chat_history = []
 
 # ==========================================================
 # Chat Loop
@@ -146,7 +150,16 @@ while True:
     else:
 
         docs = retriever.invoke(question)
+        
+    history = ""
 
+# Keep only last 3 conversations
+
+    for q, a in chat_history[-3:]:
+
+        history += f"User: {q}\n"
+
+        history += f"Assistant: {a}\n\n"    
     # Build Context
 
     context = ""
@@ -171,13 +184,35 @@ Content:
 --------------------------------------------------
 
 """
+# Add Conversation History
 
+    context = f"""
+    Conversation History
+
+    {history}
+
+    Retrieved Text
+
+    {context}
+"""
     # Generate Answer
     print("\nGenerating Answer...")
     answer = generate_answer(
         question,
         context
     )
+    if len(docs) == 0:
+
+        print("No relevant textbook found.")
+
+    continue
+
+    chat_history.append(
+    (
+        question,
+        answer
+    )
+)
     print("Answer Generated")
 
     print("\n" + "=" * 80)
@@ -188,14 +223,28 @@ Content:
 
     print("\nRetrieved Sources\n")
 
-    for i, d in enumerate(docs, start=1):
+seen = set()
 
-        print(
-            f"{i}. "
-            f"{d.metadata.get('subject','Unknown')} | "
-            f"{d.metadata.get('book_name','')} | "
-            f"{d.metadata.get('source','')} | "
-            f"Page {d.metadata.get('page','')}"
-        )
+count = 1
 
-    print("=" * 80)
+for d in docs:
+
+    key = (
+        d.metadata["source"],
+        d.metadata["page"]
+    )
+
+    if key in seen:
+        continue
+
+    seen.add(key)
+
+    print(
+        f"{count}. "
+        f"{d.metadata.get('subject','Unknown')} | "
+        f"{d.metadata.get('book_name','')} | "
+        f"{d.metadata.get('source','')} | "
+        f"Page {d.metadata.get('page','')}"
+    )
+
+    count += 1
