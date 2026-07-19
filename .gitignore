@@ -33,9 +33,6 @@ Thumbs.db
 documents.json
 chunks.json
 
-# Vector Database
-vector_db/
-
 # Raw Dataset (Very Large)
 data/
 
